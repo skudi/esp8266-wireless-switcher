@@ -10,17 +10,16 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "espmissingincludes.h"
-#include "osapi.h"
-
 #include "ets_sys.h"
+#include "osapi.h"
+#include "espmissingincludes.h"
+
 #include "httpd.h"
 #include "io.h"
 #include "httpdespfs.h"
 #include "cgi.h"
 #include "cgiwifi.h"
 #include "stdout.h"
-#include "user_interface.h"
 
 HttpdBuiltInUrl builtInUrls[]={
 	{"/", cgiRedirect, "/index.tpl"},

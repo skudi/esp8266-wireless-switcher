@@ -90,6 +90,12 @@ void ICACHE_FLASH_ATTR wifiScanDoneCb(void *arg, STATUS status) {
 //Routine to start a WiFi access point scan.
 static void ICACHE_FLASH_ATTR wifiStartScan() {
 	int x;
+	struct scan_config scanConfig = {
+		NULL,
+		NULL,
+		0,
+		1
+	};
 	cgiWifiAps.scanInProgress=1;
 	x=wifi_station_get_connect_status();
 	if (x!=STATION_GOT_IP) {
@@ -97,7 +103,7 @@ static void ICACHE_FLASH_ATTR wifiStartScan() {
 		os_printf("STA status = %d. Disconnecting STA...\n", x);
 		wifi_station_disconnect();
 	}
-	wifi_station_scan(wifiScanDoneCb);
+	wifi_station_scan(&scanConfig, wifiScanDoneCb);
 }
 
 //This CGI is called from the bit of AJAX-code in wifi.tpl. It will initiate a
