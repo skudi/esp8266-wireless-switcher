@@ -21,7 +21,7 @@ SDK_EXTRA_INCLUDES ?= /opt/Espressif/include
 SDK_BASE	?= /opt/Espressif/ESP8266_SDK
 
 #Esptool.py path and port
-ESPTOOL		?= /home/esp8266/Share/esp_iot_sdk/esptool.py
+ESPTOOL		?= esptool.py
 ESPPORT		?= /dev/ttyUSB0
 
 # name for the target project
@@ -136,10 +136,14 @@ $(BUILD_DIR):
 firmware:
 	$(Q) mkdir -p $@
 
-flash: $(FW_FILE_1) $(FW_FILE_2)
-	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 firmware/0x00000.bin
-	sleep 10
-	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x40000 firmware/0x40000.bin
+flash1: $(FW_FILE_1)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $<
+
+flash2: $(FW_FILE_2)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x40000 $<
+
+flash: $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE_3)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(FW_FILE_1) 0x40000 $(FW_FILE_2) 0x12000 $(FW_FILE_3)
 
 webpages.espfs: html/ mkespfsimage/mkespfsimage
 	cd html; find | ../mkespfsimage/mkespfsimage  > ../webpages.espfs; cd ..
