@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Home Automation</title>
+    <title>X Automation</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
