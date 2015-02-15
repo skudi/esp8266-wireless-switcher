@@ -14,11 +14,11 @@ FW_BASE		= firmware
 # Base directory for the compiler
 XTENSA_TOOLS_ROOT ?= /opt/xtensa-lx106-elf/bin
 
-#Extra Tensilica includes from the ESS VM
-SDK_EXTRA_INCLUDES ?= /opt/Espressif/include
-
 # base directory of the ESP8266 SDK package, absolute
 SDK_BASE	?= /opt/Espressif/ESP8266_SDK
+
+#Extra Tensilica includes from the ESS VM
+SDK_EXTRA_INCLUDES ?= $(addsuffix  /include,$(SDK_BASE))
 
 #Esptool.py path and port
 ESPTOOL		?= esptool.py
