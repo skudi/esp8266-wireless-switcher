@@ -49,7 +49,7 @@ LD_SCRIPT	= eagle.app.v6.ld
 # various paths from the SDK used in this project
 SDK_LIBDIR	= lib
 SDK_LDDIR	= ld
-SDK_INCDIR	= include include/json
+SDK_INCDIR	= include
 
 # we create two different files for uploading into the flash
 # these are the names and options to generate them
@@ -74,7 +74,7 @@ SRC_DIR		:= $(MODULES)
 BUILD_DIR	:= $(addprefix $(BUILD_BASE)/,$(MODULES))
 
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
-SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
+SDK_INCDIR_OPT	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 
 SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
 OBJ		:= $(patsubst %.c,$(BUILD_BASE)/%.o,$(SRC))
@@ -84,9 +84,9 @@ TARGET_OUT	:= $(addprefix $(BUILD_BASE)/,$(TARGET).out)
 
 LD_SCRIPT	:= $(addprefix -T$(SDK_BASE)/$(SDK_LDDIR)/,$(LD_SCRIPT))
 
-INCDIR	:= $(addprefix -I,$(SRC_DIR))
-EXTRA_INCDIR	:= $(addprefix -I,$(EXTRA_INCDIR))
-MODULE_INCDIR	:= $(addsuffix /include,$(INCDIR))
+INCDIR_OPT	:= $(addprefix -I,$(SRC_DIR))
+EXTRA_INCDIR_OPT	:= $(addprefix -I,$(EXTRA_INCDIR))
+MODULE_INCDIR_OPT	:= $(addsuffix /include,$(INCDIR))
 
 FW_FILE_1	:= $(addprefix $(FW_BASE)/,$(FW_FILE_1).bin)
 FW_FILE_2	:= $(addprefix $(FW_BASE)/,$(FW_FILE_2).bin)
@@ -105,12 +105,12 @@ vpath %.c $(SRC_DIR)
 define compile-objects
 $1/%.o: %.c
 	$(vecho) "CC $$<"
-	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS)  -c $$< -o $$@
+	$(Q) $(CC) $(INCDIR_OPT) $(MODULE_INCDIR_OPT) $(EXTRA_INCDIR_OPT) $(SDK_INCDIR_OPT) $(CFLAGS)  -c $$< -o $$@
 endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+all: checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE_3) TAGS
 
 $(FW_FILE_1): $(TARGET_OUT) firmware
 	$(vecho) "FW $@"
@@ -146,14 +146,19 @@ flash: $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE_3)
 	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(FW_FILE_1) 0x40000 $(FW_FILE_2) 0x12000 $(FW_FILE_3)
 
 webpages.espfs: html/ mkespfsimage/mkespfsimage
-	cd html; find | ../mkespfsimage/mkespfsimage  > ../webpages.espfs; cd ..
+	$(vecho) "webpages: $@"
+	$(Q) cd html; find | ../mkespfsimage/mkespfsimage  > ../webpages.espfs; cd ..
+	$(Q) if [ $$(stat -c '%s' webpages.espfs) -gt $$(( 0x2E000 )) ]; then echo "ERROR: webpages.espfs too big!"; false; fi
 
 mkespfsimage/mkespfsimage: mkespfsimage/
 	make -C mkespfsimage
 
 htmlflash: webpages.espfs
-	if [ $$(stat -c '%s' webpages.espfs) -gt $$(( 0x2E000 )) ]; then echo "webpages.espfs too big!"; false; fi
 	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x12000 webpages.espfs
+
+TAGS: $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE_3)
+	$(vecho) "TAGS"
+	$(Q) etags -R $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) 2>/dev/null
 
 clean:
 	$(Q) rm -f $(APP_AR)
