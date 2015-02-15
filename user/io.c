@@ -27,13 +27,7 @@ static ETSTimer resetBtntimer;
 static char GpioState = 0;
 
 void ioLed(int state) {
-    if (state == 0) {
-        gpio_output_set(0, (1<<LEDGPIO), (1<<LEDGPIO), (1<<BTNGPIO));
-        GpioState = 0;
-    } else {
-        gpio_output_set((1<<LEDGPIO), 0, (1<<LEDGPIO), (1<<BTNGPIO));
-        GpioState = 1;
-    }
+	GPIO_OUTPUT_SET(LEDGPIO, state);
 }
 
 static void ICACHE_FLASH_ATTR resetBtnTimerCb(void *arg) {
@@ -44,10 +38,10 @@ static void ICACHE_FLASH_ATTR resetBtnTimerCb(void *arg) {
         
         if (resetCnt>=1) {
             if (GpioState == 0) {
-                gpio_output_set((1<<LEDGPIO), 0, (1<<LEDGPIO), (1<<BTNGPIO));
+                GPIO_OUTPUT_SET(LEDGPIO, 1);
                 GpioState = 1;
             } else {
-                gpio_output_set(0, (1<<LEDGPIO), (1<<LEDGPIO), (1<<BTNGPIO));
+                GPIO_OUTPUT_SET(LEDGPIO, 0);
                 GpioState = 0;
             }
         }
@@ -60,13 +54,17 @@ static void ICACHE_FLASH_ATTR resetBtnTimerCb(void *arg) {
         }
         resetCnt=0;
     }
+		if ((resetCnt & 0x07) == 0x04) {
+            os_printf("resetBtnTimerCb: gpio0 LOW: %d\n", resetCnt);
+		}
 }
 
 void ioInit() {
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0);
-	gpio_output_set(0, (1<<LEDGPIO), (1<<LEDGPIO), (1<<BTNGPIO));
-        os_timer_disarm(&resetBtntimer);
+	GPIO_OUTPUT_SET(LEDGPIO, 0);
+	GPIO_DIS_OUTPUT(BTNGPIO);
+	os_timer_disarm(&resetBtntimer);
 	os_timer_setfn(&resetBtntimer, resetBtnTimerCb, NULL);
 	os_timer_arm(&resetBtntimer, 500, 1);
 }
